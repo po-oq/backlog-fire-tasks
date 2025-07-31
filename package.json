@@ -1,0 +1,72 @@
+{
+  "name": "backlog-fire-tasks",
+  "version": "1.0.0",
+  "description": "🔥 Backlogタスクの期限切れを視覚的に管理するCLIダッシュボード",
+  "type": "module",
+  "main": "bin/cli.js",
+  "bin": {
+    "backlog-fire-tasks": "./bin/cli.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x ./bin/cli.js",
+    "dev": "tsx src/cli.ts",
+    "start": "node bin/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "example:basic": "tsx -r dotenv/config examples/basic-usage.ts",
+    "example:filtering": "tsx -r dotenv/config examples/task-filtering.ts",
+    "example:overdue": "tsx -r dotenv/config examples/overdue-detection.ts",
+    "examples": "echo '🔥 Available examples:' && echo '  npm run example:basic     - Basic usage' && echo '  npm run example:filtering - Task filtering' && echo '  npm run example:overdue   - Overdue detection'",
+    "bun:example:basic": "bun examples/basic-usage.ts",
+    "bun:example:filtering": "bun examples/task-filtering.ts",
+    "bun:example:overdue": "bun examples/overdue-detection.ts",
+    "bun:examples": "echo '🔥 Bun examples:' && echo '  bun run bun:example:basic     - Basic usage (Bun)' && echo '  bun run bun:example:filtering - Task filtering (Bun)' && echo '  bun run bun:example:overdue   - Overdue detection (Bun)'"
+  },
+  "keywords": [
+    "backlog",
+    "task-management",
+    "cli",
+    "dashboard",
+    "deadline",
+    "overdue",
+    "project-management"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    ".env.example"
+  ],
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "neverthrow": "^8.2.0",
+    "open": "^8.4.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/backlog-fire-tasks.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/backlog-fire-tasks/issues"
+  },
+  "homepage": "https://github.com/yourusername/backlog-fire-tasks#readme"
+}
