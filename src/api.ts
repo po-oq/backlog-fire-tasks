@@ -51,7 +51,7 @@ async function backlogApiFetch<T>(
 ): Promise<Result<T, Error>> {
   // URL構築
   const baseUrl = `${config.spaceUrl}/api/v2/${endpoint}`;
-  const url = params 
+  const url = params
     ? `${baseUrl}?${params.toString()}`
     : `${baseUrl}?apiKey=${config.apiKey}`;
 
@@ -60,9 +60,11 @@ async function backlogApiFetch<T>(
     const response = await fetch(url);
 
     if (!response.ok) {
-      return err(new Error(
-        `Backlog API呼び出しに失敗: ${response.status} ${response.statusText} (${endpoint})`
-      ));
+      return err(
+        new Error(
+          `Backlog API呼び出しに失敗: ${response.status} ${response.statusText} (${endpoint})`
+        )
+      );
     }
 
     const data = (await response.json()) as T;
@@ -71,11 +73,13 @@ async function backlogApiFetch<T>(
     if (error instanceof Error) {
       return err(error);
     }
-    return err(new Error(`Backlog API呼び出し中に予期しないエラーが発生しました (${endpoint})`));
+    return err(
+      new Error(
+        `Backlog API呼び出し中に予期しないエラーが発生しました (${endpoint})`
+      )
+    );
   }
 }
-
-
 
 // ビジネスロジック関数
 export function isCompletedStatus(statusName: string): boolean {
@@ -293,7 +297,10 @@ export async function fetchProjects(): Promise<ProjectsResult> {
   if (configResult.isErr()) {
     return err(configResult.error);
   }
-  return await backlogApiFetch<BacklogProject[]>(configResult.value, "projects");
+  return await backlogApiFetch<BacklogProject[]>(
+    configResult.value,
+    "projects"
+  );
 }
 
 export async function fetchProjectStatuses(
@@ -308,8 +315,6 @@ export async function fetchProjectStatuses(
     `projects/${projectId}/statuses`
   );
 }
-
-
 
 export async function fetchUsers(): Promise<UsersResult> {
   const configResult = getBacklogConfig();
