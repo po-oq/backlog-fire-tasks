@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { ok, err } from 'neverthrow';
+import { ok, err, Result } from "neverthrow";
 import type {
   Task,
   BacklogIssue,
@@ -25,7 +25,9 @@ function getBacklogConfig(): BacklogConfigResult {
   const memberKeys = process.env.MEMBER_KEYS?.split(",") || [];
 
   if (!spaceUrl || !apiKey) {
-    return err(new Error("環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です"));
+    return err(
+      new Error("環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です")
+    );
   }
 
   return ok({
@@ -37,6 +39,43 @@ function getBacklogConfig(): BacklogConfigResult {
     serverPort: parseInt(process.env.SERVER_PORT || "3001"),
   });
 }
+
+/**
+ * Backlog API共通fetch関数
+ * 設定取得、URL構築、レスポンス処理を統一化
+ */
+async function backlogApiFetch<T>(
+  config: BacklogConfig,
+  endpoint: string,
+  params?: URLSearchParams
+): Promise<Result<T, Error>> {
+  // URL構築
+  const baseUrl = `${config.spaceUrl}/api/v2/${endpoint}`;
+  const url = params 
+    ? `${baseUrl}?${params.toString()}`
+    : `${baseUrl}?apiKey=${config.apiKey}`;
+
+  // fetch実行とレスポンス処理
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return err(new Error(
+        `Backlog API呼び出しに失敗: ${response.status} ${response.statusText} (${endpoint})`
+      ));
+    }
+
+    const data = (await response.json()) as T;
+    return ok(data);
+  } catch (error) {
+    if (error instanceof Error) {
+      return err(error);
+    }
+    return err(new Error(`Backlog API呼び出し中に予期しないエラーが発生しました (${endpoint})`));
+  }
+}
+
+
 
 // ビジネスロジック関数
 export function isCompletedStatus(statusName: string): boolean {
@@ -67,7 +106,10 @@ export async function getActiveStatusIds(
   const statusPromises = projectIds.map(async (id) => {
     const result = await fetchProjectStatuses(id);
     if (result.isErr()) {
-      console.warn(`Project ${id} statuses fetch failed:`, result.error.message);
+      console.warn(
+        `Project ${id} statuses fetch failed:`,
+        result.error.message
+      );
       return ok([]); // エラー時は空配列で継続
     }
     return result;
@@ -192,9 +234,11 @@ export async function fetchIssues(): Promise<IssuesResult> {
   if (config.projectKeys.length > 0) {
     const projectsResult = await fetchProjects();
     if (projectsResult.isErr()) {
-      return err(new Error(
-        `プロジェクト情報の取得に失敗: ${projectsResult.error.message}`
-      ));
+      return err(
+        new Error(
+          `プロジェクト情報の取得に失敗: ${projectsResult.error.message}`
+        )
+      );
     }
 
     const projects = projectsResult.value;
@@ -203,11 +247,13 @@ export async function fetchIssues(): Promise<IssuesResult> {
     );
 
     if (filteredProjects.length === 0) {
-      return err(new Error(
-        `指定されたプロジェクトが見つかりません: ${config.projectKeys.join(
-          ", "
-        )}`
-      ));
+      return err(
+        new Error(
+          `指定されたプロジェクトが見つかりません: ${config.projectKeys.join(
+            ", "
+          )}`
+        )
+      );
     }
 
     const projectIds = filteredProjects.map((p) => p.id);
@@ -231,47 +277,15 @@ export async function fetchIssues(): Promise<IssuesResult> {
     }
   }
 
-  // ユーザーIDの取得と設定
+  // ユーザーID（assigneeId）の直接指定
   if (config.memberKeys.length > 0) {
-    const usersResult = await fetchUsers();
-    if (usersResult.isErr()) {
-      // ユーザー情報の取得に失敗してもエラーとしない（警告のみ）
-      console.warn(
-        `ユーザー情報の取得に失敗: ${usersResult.error.message}`
-      );
-    } else {
-      const users = usersResult.value;
-      const filteredUsers = users.filter((u) =>
-        config.memberKeys.includes(u.userId)
-      );
-
-      if (filteredUsers.length > 0) {
-        filteredUsers.forEach((user) => {
-          params.append("assigneeId[]", user.id.toString());
-        });
-      }
-    }
+    config.memberKeys.forEach((memberId) => {
+      params.append("assigneeId[]", memberId);
+    });
   }
 
-  const url = `${config.spaceUrl}/api/v2/issues?${params.toString()}`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return err(new Error(
-        `課題一覧取得に失敗: ${response.status} ${response.statusText}`
-      ));
-    }
-
-    const issues = (await response.json()) as BacklogIssue[];
-    return ok(issues);
-  } catch (error) {
-    if (error instanceof Error) {
-      return err(error);
-    }
-    return err(new Error("課題一覧取得中に予期しないエラーが発生しました"));
-  }
+  // backlogApiFetchを使用してfetch実行
+  return await backlogApiFetch<BacklogIssue[]>(config, "issues", params);
 }
 
 export async function fetchProjects(): Promise<ProjectsResult> {
@@ -279,27 +293,7 @@ export async function fetchProjects(): Promise<ProjectsResult> {
   if (configResult.isErr()) {
     return err(configResult.error);
   }
-
-  const config = configResult.value;
-  const url = `${config.spaceUrl}/api/v2/projects?apiKey=${config.apiKey}`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return err(new Error(
-        `プロジェクト取得に失敗: ${response.status} ${response.statusText}`
-      ));
-    }
-
-    const projects = (await response.json()) as BacklogProject[];
-    return ok(projects);
-  } catch (error) {
-    if (error instanceof Error) {
-      return err(error);
-    }
-    return err(new Error("プロジェクト取得中に予期しないエラーが発生しました"));
-  }
+  return await backlogApiFetch<BacklogProject[]>(configResult.value, "projects");
 }
 
 export async function fetchProjectStatuses(
@@ -309,83 +303,20 @@ export async function fetchProjectStatuses(
   if (configResult.isErr()) {
     return err(configResult.error);
   }
-
-  const config = configResult.value;
-  const url = `${config.spaceUrl}/api/v2/projects/${projectId}/statuses?apiKey=${config.apiKey}`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return err(new Error(
-        `プロジェクト状態取得に失敗: ${response.status} ${response.statusText}`
-      ));
-    }
-
-    const statuses = (await response.json()) as BacklogStatus[];
-    return ok(statuses);
-  } catch (error) {
-    if (error instanceof Error) {
-      return err(error);
-    }
-    return err(new Error("プロジェクト状態取得中に予期しないエラーが発生しました"));
-  }
+  return await backlogApiFetch<BacklogStatus[]>(
+    configResult.value,
+    `projects/${projectId}/statuses`
+  );
 }
 
-export async function fetchStatuses(): Promise<StatusesResult> {
-  const configResult = getBacklogConfig();
-  if (configResult.isErr()) {
-    return err(configResult.error);
-  }
 
-  const config = configResult.value;
-  const url = `${config.spaceUrl}/api/v2/statuses?apiKey=${config.apiKey}`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return err(new Error(
-        `状態一覧取得に失敗: ${response.status} ${response.statusText}`
-      ));
-    }
-
-    const statuses = (await response.json()) as BacklogStatus[];
-    return ok(statuses);
-  } catch (error) {
-    if (error instanceof Error) {
-      return err(error);
-    }
-    return err(new Error("状態一覧取得中に予期しないエラーが発生しました"));
-  }
-}
 
 export async function fetchUsers(): Promise<UsersResult> {
   const configResult = getBacklogConfig();
   if (configResult.isErr()) {
     return err(configResult.error);
   }
-
-  const config = configResult.value;
-  const url = `${config.spaceUrl}/api/v2/users?apiKey=${config.apiKey}`;
-
-  try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return err(new Error(
-        `ユーザー一覧取得に失敗: ${response.status} ${response.statusText}`
-      ));
-    }
-
-    const users = (await response.json()) as BacklogUser[];
-    return ok(users);
-  } catch (error) {
-    if (error instanceof Error) {
-      return err(error);
-    }
-    return err(new Error("ユーザー一覧取得中に予期しないエラーが発生しました"));
-  }
+  return await backlogApiFetch<BacklogUser[]>(configResult.value, "users");
 }
 
 // API関数をまとめたオブジェクト（テスト用モック対応）
@@ -393,7 +324,6 @@ export const api = {
   fetchProjects,
   fetchIssues,
   fetchProjectStatuses,
-  fetchStatuses,
   fetchUsers,
 };
 

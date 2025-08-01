@@ -8,7 +8,6 @@ import {
   fetchIssues,
   fetchProjects,
   fetchProjectStatuses,
-  fetchStatuses,
   fetchUsers,
   fetchBacklogTasks,
   api
@@ -267,11 +266,7 @@ describe('Backlog API functions', () => {
       expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
     });
 
-    it('fetchStatuses should return error for missing environment variables', async () => {
-      const result = await fetchStatuses();
-      expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
-    });
+
 
     it('fetchUsers should return error for missing environment variables', async () => {
       const result = await fetchUsers();

@@ -33,8 +33,14 @@ async function basicUsageExample() {
 
     console.log('🔍 Backlogからタスクを取得中...');
     
-    // 2. タスク取得
-    const tasks: Task[] = await fetchBacklogTasks();
+    // 2. タスク取得（Result型の適切な処理）
+    const tasksResult = await fetchBacklogTasks();
+    
+    if (tasksResult.isErr()) {
+      throw new Error(`タスク取得に失敗しました: ${tasksResult.error.message}`);
+    }
+    
+    const tasks = tasksResult.value;
     
     // 3. 基本統計の表示
     console.log('✅ タスク取得完了!');
