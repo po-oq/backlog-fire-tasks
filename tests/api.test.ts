@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Result } from 'neverthrow';
 import { 
   calculateOverdueStatus,
   transformIssueToTask,
@@ -15,7 +14,7 @@ import {
 
 // getBacklogConfig は内部関数なので、型のみimport
 // import { getBacklogConfig } from '../src/api.js';
-import type { BacklogIssue, BacklogProject, Task, BacklogConfig } from '../src/types.js';
+import type { BacklogIssue, BacklogProject } from '../src/types.js';
 
 describe('calculateOverdueStatus', () => {
   it('should return not overdue for future date', () => {
@@ -402,12 +401,12 @@ describe('Backlog API functions', () => {
         }
       ];
 
-      const mockFetchProjects = vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
+      vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
         isOk: () => true, 
         isErr: () => false,
         value: mockProjects 
       } as any);
-      const mockFetchIssues = vi.spyOn(api, 'fetchIssues').mockResolvedValue({ 
+      vi.spyOn(api, 'fetchIssues').mockResolvedValue({ 
         isOk: () => true, 
         isErr: () => false,
         value: mockIssues 
@@ -425,7 +424,7 @@ describe('Backlog API functions', () => {
 
     it('should handle API errors gracefully', async () => {
       // API エラーのハンドリングテスト
-      const mockFetchProjects = vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
+      vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
         isOk: () => false,
         isErr: () => true, 
         error: new Error('プロジェクト取得エラー') 
