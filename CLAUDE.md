@@ -288,7 +288,13 @@ async function startServer() {
   console.log("🔍 Backlogからデータ取得中...");
 
   try {
-    const tasks = await fetchBacklogTasks();
+    const tasksResult = await fetchBacklogTasks();
+    
+    if (tasksResult.isErr()) {
+      throw new Error(`タスク取得に失敗しました: ${tasksResult.error.message}`);
+    }
+    
+    const tasks = tasksResult.value;
     console.log(`✅ ${tasks.length}件のタスクを取得！`);
 
     app.get("/", (req, res) => {
