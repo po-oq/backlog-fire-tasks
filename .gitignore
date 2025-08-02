@@ -40,6 +40,11 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Test intermediate files
+tests/*.js
+tests/*.js.map
+tests/*.d.ts
+
 # Logs
 logs/
 *.log
