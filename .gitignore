@@ -63,6 +63,9 @@ temp/
 .claude/commands/
 .claude/scripts/
 
+# Serena (MCP) files
+.serena/
+
 # Other
 *.tgz
 *.tar.gz
