@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Result } from 'neverthrow';
 import { 
   calculateOverdueStatus,
   transformIssueToTask,
@@ -15,10 +14,10 @@ import {
 
 // getBacklogConfig は内部関数なので、型のみimport
 // import { getBacklogConfig } from '../src/api.js';
-import type { BacklogIssue, BacklogProject, Task, BacklogConfig } from '../src/types.js';
+import type { BacklogIssue, BacklogProject } from '../src/types.js';
 
 describe('calculateOverdueStatus', () => {
-  it('should return not overdue for future date', () => {
+  it('未来の日付の場合、期限切れではないこと', () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const futureDateStr = tomorrow.toISOString().split('T')[0];
@@ -32,7 +31,7 @@ describe('calculateOverdueStatus', () => {
     });
   });
 
-  it('should return overdue for past date', () => {
+  it('過去の日付の場合、期限切れであること', () => {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     const pastDateStr = threeDaysAgo.toISOString().split('T')[0];
@@ -46,7 +45,7 @@ describe('calculateOverdueStatus', () => {
     });
   });
 
-  it('should return not overdue when no due date', () => {
+  it('期限日が未設定の場合、期限切れではないこと', () => {
     const result = calculateOverdueStatus();
     
     expect(result).toEqual({
@@ -56,7 +55,7 @@ describe('calculateOverdueStatus', () => {
     });
   });
 
-  it('should return not overdue for today', () => {
+  it('今日の日付の場合、期限切れではないこと', () => {
     const todayStr = new Date().toISOString().split('T')[0];
     
     const result = calculateOverdueStatus(todayStr);
@@ -70,7 +69,7 @@ describe('calculateOverdueStatus', () => {
 });
 
 describe('transformIssueToTask', () => {
-  it('should transform BacklogIssue to Task', () => {
+  it('BacklogIssueをTaskに変換できること', () => {
     const mockIssue: BacklogIssue = {
       id: 123,
       projectId: 456,
@@ -101,7 +100,7 @@ describe('transformIssueToTask', () => {
     });
   });
 
-  it('should handle issue without assignee', () => {
+  it('担当者なしの課題を適切に処理できること', () => {
     const mockIssue: BacklogIssue = {
       id: 123,
       projectId: 456,
@@ -134,14 +133,14 @@ describe('transformIssueToTask', () => {
 // 状態フィルタリング関数のテスト
 describe('Status filtering functions', () => {
   describe('isCompletedStatus', () => {
-    it('should identify completed status by Japanese name', () => {
+    it('日本語の完了状態名を識別できること', () => {
       expect(isCompletedStatus('完了')).toBe(true);
       expect(isCompletedStatus('完成')).toBe(true);
       expect(isCompletedStatus('処理中')).toBe(false);
       expect(isCompletedStatus('未対応')).toBe(false);
     });
 
-    it('should identify completed status by English name', () => {
+    it('英語の完了状態名を識別できること', () => {
       expect(isCompletedStatus('Done')).toBe(true);
       expect(isCompletedStatus('Closed')).toBe(true);
       expect(isCompletedStatus('Close')).toBe(true);
@@ -149,7 +148,7 @@ describe('Status filtering functions', () => {
       expect(isCompletedStatus('Open')).toBe(false);
     });
 
-    it('should be case insensitive', () => {
+    it('大文字小文字を区別しないこと', () => {
       expect(isCompletedStatus('DONE')).toBe(true);
       expect(isCompletedStatus('done')).toBe(true);
       expect(isCompletedStatus('DoNe')).toBe(true);
@@ -159,7 +158,7 @@ describe('Status filtering functions', () => {
   });
 
   describe('getActiveStatusIds', () => {
-    it('should return success with empty array for empty project IDs', async () => {
+    it('プロジェクトIDが空の場合、空配列を返すこと', async () => {
       const result = await getActiveStatusIds([]);
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -167,7 +166,7 @@ describe('Status filtering functions', () => {
       }
     });
 
-    it('should return success with empty array when all projects fail to fetch statuses', async () => {
+    it('全プロジェクトで状態取得に失敗した場合、空配列を返すこと', async () => {
       // 環境変数なしで実行→全プロジェクトでエラー→空配列返却
       const result = await getActiveStatusIds([1, 2, 3]);
       expect(result.isOk()).toBe(true);
@@ -177,7 +176,7 @@ describe('Status filtering functions', () => {
       }
     });
 
-    it('should handle single project status fetch error gracefully', async () => {
+    it('単一プロジェクトでのエラーを適切に処理できること', async () => {
       // 単一プロジェクトでもエラー処理されることを確認
       const result = await getActiveStatusIds([999]);
       expect(result.isOk()).toBe(true);
@@ -201,7 +200,7 @@ describe('getBacklogConfig', () => {
       vi.unstubAllEnvs();
     });
 
-    it.skip('should return error when environment variables are missing', () => {
+    it.skip('環境変数が不足している場合、エラーを返すこと', () => {
       // Note: getBacklogConfig needs to be exported and converted to neverthrow first
       // This test will be implemented after getBacklogConfig is available
     });
@@ -221,16 +220,16 @@ describe('getBacklogConfig', () => {
       vi.unstubAllEnvs();
     });
 
-    it.skip('should return valid config when environment variables are present', () => {
+    it.skip('環境変数が設定されている場合、有効な設定を返すこと', () => {
       // Note: getBacklogConfig needs to be exported and converted to neverthrow first
       // This test will be implemented after getBacklogConfig is available
     });
   });
 });
 
-// API関数のテスト（環境変数エラーをテスト）
+// API関数のテスト（環境変数エラーを統合テスト）
 describe('Backlog API functions', () => {
-  // 環境変数がない状態でのテスト
+  // 環境変数がない状態での統合テスト
   describe('without environment variables', () => {
     beforeEach(() => {
       // 環境変数をクリア
@@ -241,43 +240,28 @@ describe('Backlog API functions', () => {
     afterEach(() => {
       vi.unstubAllEnvs();
     });
-    it('fetchIssues should return error for missing environment variables', async () => {
-      const result = await fetchIssues();
-      expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
-    });
 
-    it('fetchIssues should exclude completed statuses when projects are configured', async () => {
-      // 環境変数なしでテスト→結果的に完了除外ロジックが動作確認される
-      const result = await fetchIssues();
-      expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
-    });
+    it('環境変数なしの場合、全API関数でエラーを返すこと', async () => {
+      // 全API関数で同じ環境変数エラーが発生することを確認
+      const expectedError = '環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です';
+      
+      const results = await Promise.all([
+        fetchIssues(),
+        fetchProjects(), 
+        fetchProjectStatuses(123),
+        fetchUsers(),
+        fetchBacklogTasks()
+      ]);
 
-    it('fetchProjects should return error for missing environment variables', async () => {
-      const result = await fetchProjects();
-      expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
-    });
-
-    it('fetchProjectStatuses should return error for missing environment variables', async () => {
-      const result = await fetchProjectStatuses(123);
-      expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
-    });
-
-
-
-    it('fetchUsers should return error for missing environment variables', async () => {
-      const result = await fetchUsers();
-      expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
-    });
-
-    it('fetchBacklogTasks should return error for missing environment variables', async () => {
-      const result = await fetchBacklogTasks();
-      expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('環境変数 BACKLOG_SPACE_URL と BACKLOG_API_KEY が必要です');
+      // 全ての結果がエラーであることを確認
+      results.forEach((result, index) => {
+        const functionNames = ['fetchIssues', 'fetchProjects', 'fetchProjectStatuses', 'fetchUsers', 'fetchBacklogTasks'];
+        expect(result.isErr(), `${functionNames[index]} should return error`).toBe(true);
+        
+        if (result.isErr()) {
+          expect(result.error.message, `${functionNames[index]} should have correct error message`).toBe(expectedError);
+        }
+      });
     });
   });
 
@@ -296,7 +280,7 @@ describe('Backlog API functions', () => {
       vi.restoreAllMocks();
     });
 
-    it('should fetch and transform tasks successfully', async () => {
+    it('タスクの取得と変換が正常に実行されること', async () => {
       // モックデータ準備
       const mockProjects: BacklogProject[] = [
         { id: 1, projectKey: 'TEST1', name: 'テストプロジェクト1' },
@@ -385,7 +369,7 @@ describe('Backlog API functions', () => {
       }
     });
 
-    it('should handle project mapping when project is not found', async () => {
+    it('プロジェクトが見つからない場合の処理を適切に行うこと', async () => {
       // プロジェクトマッピングでキーが見つからない場合のテスト
       const mockProjects: BacklogProject[] = [
         { id: 1, projectKey: 'KNOWN', name: 'known project' }
@@ -402,12 +386,12 @@ describe('Backlog API functions', () => {
         }
       ];
 
-      const mockFetchProjects = vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
+      vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
         isOk: () => true, 
         isErr: () => false,
         value: mockProjects 
       } as any);
-      const mockFetchIssues = vi.spyOn(api, 'fetchIssues').mockResolvedValue({ 
+      vi.spyOn(api, 'fetchIssues').mockResolvedValue({ 
         isOk: () => true, 
         isErr: () => false,
         value: mockIssues 
@@ -423,9 +407,9 @@ describe('Backlog API functions', () => {
       }
     });
 
-    it('should handle API errors gracefully', async () => {
+    it('APIエラーを適切に処理できること', async () => {
       // API エラーのハンドリングテスト
-      const mockFetchProjects = vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
+      vi.spyOn(api, 'fetchProjects').mockResolvedValue({ 
         isOk: () => false,
         isErr: () => true, 
         error: new Error('プロジェクト取得エラー') 
@@ -433,7 +417,10 @@ describe('Backlog API functions', () => {
 
       const result = await fetchBacklogTasks();
       expect(result.isErr()).toBe(true);
-      expect(result.error.message).toBe('プロジェクト取得エラー');
+      
+      if (result.isErr()) {
+        expect(result.error.message).toBe('プロジェクト取得エラー');
+      }
     });
   });
 });

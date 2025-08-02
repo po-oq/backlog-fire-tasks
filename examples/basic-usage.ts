@@ -9,7 +9,6 @@
  */
 
 import { fetchBacklogTasks } from '../src/api.js';
-import type { Task } from '../src/types.js';
 
 async function basicUsageExample() {
   console.log('🔥 Backlog Fire Tasks - 基本的な使用方法');
