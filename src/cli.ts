@@ -7,12 +7,15 @@
  * Windows/macOS/Linux クロスプラットフォーム対応
  */
 
+import React from 'react';
+import { renderToString } from 'react-dom/server';
 import express from 'express';
 import open from 'open';
 import dotenv from 'dotenv';
-import { fetchBacklogTasks } from './api.js';
+import { fetchBacklogTasks, getBacklogConfig } from './api.js';
 import type { Task } from './types.js';
 import { Server } from 'http';
+import { Dashboard } from './components/Dashboard.js';
 
 // 環境変数読み込み（Windows/Unix共通）
 if (process.env.NODE_ENV !== 'production') {
@@ -23,17 +26,21 @@ if (process.env.NODE_ENV !== 'production') {
  * Express アプリケーションを作成
  * テスト可能にするため分離
  */
-export function createApp(tasks: Task[] = []): express.Application {
+export function createApp(tasks: Task[] = [], backlogSpaceUrl?: string): express.Application {
   const app = express();
   
   app.get('/', (req, res) => {
-    // 現段階では簡易レスポンス（Dashboard は次のIssueで実装）
-    res.status(200).json({
-      message: 'Backlog Fire Tasks CLI Server',
-      tasks: tasks,
-      taskCount: tasks.length,
-      timestamp: new Date().toISOString()
-    });
+    // React Dashboard コンポーネントをSSRでレンダリング
+    const dashboardHTML = renderToString(
+      React.createElement(Dashboard, { 
+        tasks, 
+        lastUpdated: new Date(),
+        backlogSpaceUrl 
+      })
+    );
+    
+    // 完全なHTMLドキュメントとして送信
+    res.send(`<!DOCTYPE html>${dashboardHTML}`);
   });
 
   return app;
@@ -73,8 +80,12 @@ async function main() {
     const tasks = tasksResult.value;
     console.log(`✅ ${tasks.length}件のタスクを取得！`);
 
+    // Backlog設定を取得（スペースURLの取得）
+    const configResult = getBacklogConfig();
+    const backlogSpaceUrl = configResult.isOk() ? configResult.value.spaceUrl : undefined;
+
     // Express アプリケーション作成
-    const app = createApp(tasks);
+    const app = createApp(tasks, backlogSpaceUrl);
     
     // ポート設定（環境変数 または デフォルト3001）
     const PORT = Number(process.env.PORT) || 3001;

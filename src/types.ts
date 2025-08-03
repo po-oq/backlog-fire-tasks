@@ -6,6 +6,7 @@ import type { Result } from 'neverthrow';
 export interface BacklogIssue {
   id: number;
   projectId: number;
+  issueKey: string; // 課題キー (例: "PROJECT-123")
   issueType: { 
     id: number;
     name: string; 
@@ -46,6 +47,7 @@ export interface BacklogUser {
 export interface Task {
   id: number;
   projectKey: string;
+  issueKey: string; // 課題キー (例: "PROJECT-123")
   issueType: string;
   summary: string;
   status: string;

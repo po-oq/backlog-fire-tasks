@@ -18,7 +18,7 @@ import type {
 } from "./types.js";
 
 // 環境変数読み込み（Node.js/Bun両環境対応）
-function getBacklogConfig(): BacklogConfigResult {
+export function getBacklogConfig(): BacklogConfigResult {
   const spaceUrl = process.env.BACKLOG_SPACE_URL;
   const apiKey = process.env.BACKLOG_API_KEY;
   const projectKeys = process.env.PROJECT_KEYS?.split(",") || [];
@@ -207,6 +207,7 @@ export function transformIssueToTask(
   return {
     id: issue.id,
     projectKey: projectKey,
+    issueKey: issue.issueKey, // 課題キーを使用
     issueType: issue.issueType.name,
     summary: issue.summary,
     status: issue.status.name,
