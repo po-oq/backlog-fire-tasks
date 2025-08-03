@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import { Server } from 'http';
 import { AddressInfo } from 'net';
+import request from 'supertest';
 
 // CLI実装をimport（これが失敗することでREDフェーズになる）
 import { startServer, createApp } from '../src/cli.js';
@@ -47,13 +48,14 @@ describe('CLI基盤実装', () => {
     let server: Server;
 
     afterEach(async () => {
-      if (server) {
+      if (server && server.listening) {
         await new Promise<void>((resolve, reject) => {
           server.close((err) => {
             if (err) reject(err);
             else resolve();
           });
         });
+        server = null as any; // サーバー参照をクリア
       }
     });
 
@@ -68,26 +70,15 @@ describe('CLI基盤実装', () => {
     });
 
     it('ルートパス (/) にGETリクエストが処理できること', async () => {
-      const app = express();
+      const app = createApp(); // 実際のアプリを使用
       
-      app.get('/', (req, res) => {
-        res.status(200).json({ message: 'CLI Server Running' });
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        server = app.listen(0, '0.0.0.0', () => {
-          resolve();
-        });
-        server.on('error', reject);
-      });
-
-      // fetch APIでテスト（Node.js 18+対応）
-      const address = server.address() as AddressInfo;
-      const response = await fetch(`http://localhost:${address.port}/`);
-      const data = await response.json();
-
+      // supertestを使ってExpressアプリを直接テスト（サーバー起動不要）
+      const response = await request(app)
+        .get('/')
+        .expect(200);
+      
+      // レスポンスの基本的な確認
       expect(response.status).toBe(200);
-      expect(data).toEqual({ message: 'CLI Server Running' });
     });
 
     it('ポート競合時に適切なエラーハンドリングが行われること', async () => {
