@@ -26,7 +26,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
       <div className="space-x-2">
         {/* 総タスク数 */}
         <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium">
-          ✅ 取得: {totalTasks}件
+          📊 取得: {totalTasks}件
         </span>
         
         {/* 期限切れタスク数 */}
