@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom';
 
+// テスト環境であることを明示
+process.env.NODE_ENV = 'test';
+
 // グローバルなテストモックとセットアップ
 global.fetch = vi.fn();
 

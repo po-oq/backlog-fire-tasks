@@ -562,7 +562,7 @@ async function main() {
 }
 
 // CLI として実行された場合のみ main() を実行
-// テスト時は実行されない
-if (import.meta.url === `file://${process.argv[1]}`) {
+// テスト環境では実行しない (標準的な手法)
+if (process.env.NODE_ENV !== 'test') {
   main();
 }
