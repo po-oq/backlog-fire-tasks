@@ -253,7 +253,7 @@ describe('ClientDashboard', () => {
       render(<ClientDashboard />);
       
       await waitFor(() => {
-        expect(screen.getByText('📭')).toBeInTheDocument();
+        expect(screen.getByText('📄')).toBeInTheDocument();
         expect(screen.getByText('タスクが見つかりません')).toBeInTheDocument();
         expect(screen.getByText(/環境変数の設定を確認してください/)).toBeInTheDocument();
         expect(screen.getByText(/\(MEMBER_KEYS, PROJECT_KEYS\)/)).toBeInTheDocument();

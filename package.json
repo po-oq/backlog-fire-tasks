@@ -8,7 +8,8 @@
     "backlog-fire-tasks": "./bin/cli.js"
   },
   "scripts": {
-    "build": "npm run lint && tsc && chmod +x ./bin/cli.js",
+    "build": "npm run lint && npm run build:client && tsc && chmod +x ./bin/cli.js",
+    "build:client": "esbuild src/client.tsx --bundle --outfile=public/bundle.js --format=iife --jsx=automatic --jsx-import-source=react",
     "dev": "tsx src/cli.ts",
     "start": "node bin/cli.js",
     "lint": "eslint src tests examples --ext .ts,.tsx",
@@ -52,6 +53,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "esbuild": "^0.24.0",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
