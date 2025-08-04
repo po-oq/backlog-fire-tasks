@@ -15,17 +15,36 @@
 
 ## 🚀 インストール & 実行
 
+### 🎯 推奨方法（第三者向け）
+
+```bash
+# リポジトリをクローン後
+git clone <repo-url>
+cd backlog-fire-tasks
+npm install
+npm start  # 自動ビルド＋起動
+```
+
+### 🔧 開発者向け
+
+```bash
+# 開発時（高速起動）
+npm run dev
+
+# ビルドなしで起動（lintスキップ）
+npm run quick
+
+# フルビルド後起動
+npm run build && node bin/cli.js
+```
+
+### 📦 公開後（予定）
+
 ```bash
 # グローバルインストール
 npm install -g backlog-fire-tasks
-
-# 実行
 backlog-fire-tasks
-```
 
-または
-
-```bash
 # npxで直接実行
 npx backlog-fire-tasks
 ```

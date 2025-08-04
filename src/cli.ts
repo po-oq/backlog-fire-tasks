@@ -183,7 +183,9 @@ async function main() {
 }
 
 // CLI として実行された場合のみ main() を実行
-// テスト時は実行されない
-if (import.meta.url === `file://${process.argv[1]}`) {
+// テスト時は実行されない（Windows/Unix完全対応）
+import { fileURLToPath } from 'url';
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main();
 }
