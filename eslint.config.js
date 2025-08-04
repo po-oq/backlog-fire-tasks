@@ -34,9 +34,9 @@ export default [
       'no-console': 'off'
     }
   },
-  // ブラウザ環境用の設定（client.tsx）
+  // ブラウザ環境用の設定（client.tsx + ClientDashboard.tsx）
   {
-    files: ['src/client.tsx'],
+    files: ['src/client.tsx', 'src/components/ClientDashboard.tsx'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {

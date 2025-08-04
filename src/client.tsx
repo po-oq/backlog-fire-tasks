@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ClientDashboard } from './components/ClientDashboard.js';
+import { ClientDashboard } from './components/ClientDashboard';
 
 // HTMLから渡されるbacklogSpaceUrl設定を取得
 declare global {
