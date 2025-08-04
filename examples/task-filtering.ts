@@ -218,8 +218,10 @@ async function taskFilteringExample() {
   }
 }
 
-// スクリプトとして実行された場合
-if (import.meta.url === `file://${process.argv[1]}`) {
+// スクリプトとして実行された場合（Windows/Unix対応）
+import { fileURLToPath } from 'url';
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   taskFilteringExample().catch(console.error);
 }
 
