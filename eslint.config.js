@@ -34,6 +34,66 @@ export default [
       'no-console': 'off'
     }
   },
+  // ブラウザ環境用の設定（client.tsx）
+  {
+    files: ['src/client.tsx'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      },
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        console: 'readonly'
+      }
+    },
+    plugins: {
+      '@typescript-eslint': tseslint
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { 
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_' 
+      }],
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-console': 'off'
+    }
+  },
+  // テスト環境用の設定
+  {
+    files: ['tests/**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      },
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        URLSearchParams: 'readonly',
+        fetch: 'readonly',
+        global: 'readonly',
+        vi: 'readonly'
+      }
+    },
+    plugins: {
+      '@typescript-eslint': tseslint
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { 
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_' 
+      }],
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-console': 'off'
+    }
+  },
   {
     ignores: [
       'bin/',
