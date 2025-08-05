@@ -20,6 +20,8 @@ import type {
 } from "./types.js";
 
 // 環境変数読み込み（Node.js/Bun両環境対応）
+
+
 export function getBacklogConfig(): BacklogConfigResult {
   const spaceUrl = process.env.BACKLOG_SPACE_URL;
   const apiKey = process.env.BACKLOG_API_KEY;
@@ -361,11 +363,11 @@ export async function fetchBacklogTasks(): Promise<TasksResult> {
   const issues = issuesResult.value;
 
   // 3. 各課題をTask型に変換
-  const tasks: Task[] = issues.map((issue) => {
+  const realTasks: Task[] = issues.map((issue) => {
     const projectKey =
       projectMap.get(issue.projectId) || `PROJECT_${issue.projectId}`;
     return transformIssueToTask(issue, projectKey);
   });
 
-  return ok(tasks);
+  return ok(realTasks);
 }

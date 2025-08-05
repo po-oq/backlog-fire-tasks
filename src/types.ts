@@ -23,6 +23,7 @@ export interface BacklogIssue {
   startDate?: string;
   dueDate?: string;
   updated: string;
+  parentIssueId?: number; // 親課題ID（追加）
 }
 
 export interface BacklogProject {
@@ -58,6 +59,11 @@ export interface Task {
   isOverdue: boolean;
   overdueDays: number;
   isDueTomorrow: boolean;
+  parentTask?: {  // 親タスク情報（追加）
+    id: number;
+    issueKey: string;
+    summary: string;
+  };
 }
 
 // API関数の戻り値型
