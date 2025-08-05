@@ -195,7 +195,8 @@ export function calculateOverdueStatus(dueDate?: string): OverdueStatus {
 
 export function transformIssueToTask(
   issue: BacklogIssue,
-  projectKey: string
+  projectKey: string,
+  allIssues?: BacklogIssue[]  // 親課題検索用の全課題データ
 ): Task {
   // ISO日付を日本語形式に変換（例: 2024-01-15T09:00:00Z → 2024/01/15 18:00）
   const formatDate = (isoDate: string): string => {
@@ -211,6 +212,19 @@ export function transformIssueToTask(
   // 期限切れ状況を計算
   const overdueStatus = calculateOverdueStatus(issue.dueDate);
 
+  // 🎯 親タスク情報の生成
+  let parentTask: Task['parentTask'] = undefined;
+  if (issue.parentIssueId && allIssues) {
+    const parentIssue = allIssues.find(i => i.id === issue.parentIssueId);
+    if (parentIssue) {
+      parentTask = {
+        id: parentIssue.id,
+        issueKey: parentIssue.issueKey,
+        summary: parentIssue.summary
+      };
+    }
+  }
+
   return {
     id: issue.id,
     projectKey: projectKey,
@@ -225,6 +239,7 @@ export function transformIssueToTask(
     isOverdue: overdueStatus.isOverdue,
     overdueDays: overdueStatus.overdueDays,
     isDueTomorrow: overdueStatus.isDueTomorrow,
+    parentTask, // 🎯 親タスク情報を追加
   };
 }
 
@@ -362,11 +377,11 @@ export async function fetchBacklogTasks(): Promise<TasksResult> {
 
   const issues = issuesResult.value;
 
-  // 3. 各課題をTask型に変換
+  // 3. 各課題をTask型に変換（🎯 親子関係対応）
   const realTasks: Task[] = issues.map((issue) => {
     const projectKey =
       projectMap.get(issue.projectId) || `PROJECT_${issue.projectId}`;
-    return transformIssueToTask(issue, projectKey);
+    return transformIssueToTask(issue, projectKey, issues); // 🎯 全課題データを渡して親子関係を解決
   });
 
   return ok(realTasks);
