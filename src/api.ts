@@ -1,5 +1,7 @@
 import "dotenv/config";
 import { ok, err, Result } from "neverthrow";
+import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import type {
   Task,
   BacklogIssue,
@@ -145,13 +147,16 @@ export function calculateOverdueStatus(dueDate?: string): OverdueStatus {
     };
   }
 
-  // 日付文字列を直接比較（YYYY-MM-DD形式想定）
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD
+  // JST（日本標準時）で今日の日付を取得 - date-fnsを使って意図を明確に
+  const jstTimezone = 'Asia/Tokyo';
+  const now = new Date();
+  const nowJST = toZonedTime(now, jstTimezone);
+  
+  const todayStr = format(nowJST, 'yyyy-MM-dd'); // YYYY-MM-DD
 
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD
+  const tomorrow = new Date(nowJST);
+  tomorrow.setDate(nowJST.getDate() + 1);
+  const tomorrowStr = format(tomorrow, 'yyyy-MM-dd'); // YYYY-MM-DD
 
   // 期限日を正規化（時刻部分を除去）
   const dueDateStr = dueDate.split("T")[0]; // YYYY-MM-DD
@@ -173,7 +178,7 @@ export function calculateOverdueStatus(dueDate?: string): OverdueStatus {
     };
   }
 
-  // 期限超過判定
+  // 期限超過判定（JST基準）
   const dueTime = new Date(dueDateStr + "T00:00:00").getTime();
   const todayTime = new Date(todayStr + "T00:00:00").getTime();
   const diffTime = todayTime - dueTime;
