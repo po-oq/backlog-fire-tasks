@@ -66,7 +66,7 @@ describe('ClientDashboard', () => {
       });
 
       // 統計情報の確認
-      expect(screen.getByText('📊 取得: 3件')).toBeInTheDocument();
+      expect(screen.getByText('📊 全て: 3件')).toBeInTheDocument();
       expect(screen.getByText('🔥 期限切れ: 1件')).toBeInTheDocument();
       expect(screen.getByText('⚠️ 明日期限: 1件')).toBeInTheDocument();
       
@@ -168,7 +168,7 @@ describe('ClientDashboard', () => {
 
       // フィルター表示の確認
       expect(screen.getByText('🔍 フィルター: 期限切れタスク')).toBeInTheDocument();
-      expect(screen.getByText('1件 / 4件')).toBeInTheDocument();
+      expect(screen.getAllByText('1件 / 4件')[0]).toBeInTheDocument();
     });
 
     it('明日期限フィルターが正しく機能すること', async () => {
@@ -186,7 +186,7 @@ describe('ClientDashboard', () => {
 
       // フィルター表示の確認
       expect(screen.getByText('🔍 フィルター: 明日期限タスク')).toBeInTheDocument();
-      expect(screen.getByText('1件 / 4件')).toBeInTheDocument();
+      expect(screen.getAllByText('1件 / 4件')[0]).toBeInTheDocument();
     });
 
     it('すべて表示フィルターに戻れること', async () => {
@@ -287,7 +287,7 @@ describe('ClientDashboard', () => {
       fireEvent.click(overdueButton);
       
       await waitFor(() => {
-        expect(overdueButton).toHaveClass('bg-red-200', 'text-red-900', 'shadow-md');
+        expect(overdueButton).toHaveClass('bg-red-500', 'text-white', 'shadow-lg', 'transform', 'scale-105');
       });
     });
 

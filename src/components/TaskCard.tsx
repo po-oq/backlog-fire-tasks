@@ -23,30 +23,75 @@ export function TaskCard({
   // ステータス色をuseMemoで最適化
   const statusColor = useMemo(() => getTaskStatusColor(task.status), [task.status]);
 
-  // タスクタイトルのレンダリング（useMemoで最適化）
+  // 🎯 親子タスクタイトルのレンダリング（階層表示対応）
   const taskTitle = useMemo(() => {
-    const titleClasses = `text-sm font-semibold text-gray-800 mb-2 truncate ${
+    const titleClasses = `text-sm font-semibold text-gray-800 ${
       task.status === '完了' ? 'line-through' : ''
     }`;
     
-    if (backlogSpaceUrl) {
-      const backlogUrl = generateBacklogUrl(backlogSpaceUrl, task.issueKey);
+    const linkClass = "text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-150";
+    
+    // 親タスクがある場合の階層表示
+    if (task.parentTask) {
       return (
-        <h3 className={titleClasses}>
-          <a
-            href={backlogUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-150"
-          >
-            {task.summary}
-          </a>
-        </h3>
+        <div className="mb-2">
+          {/* 親タスク */}
+          <div className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+            <span className="text-gray-400 mr-2">📋</span>
+            {backlogSpaceUrl ? (
+              <a
+                href={generateBacklogUrl(backlogSpaceUrl, task.parentTask.issueKey)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                {task.parentTask.summary}
+              </a>
+            ) : (
+              task.parentTask.summary
+            )}
+          </div>
+          
+          {/* 子タスク（インデント付き） */}
+          <div className="ml-6 relative">
+            <div className="absolute -left-4 top-0 text-gray-400 text-sm">∟</div>
+            <h3 className={titleClasses}>
+              {backlogSpaceUrl ? (
+                <a
+                  href={generateBacklogUrl(backlogSpaceUrl, task.issueKey)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                >
+                  {task.summary}
+                </a>
+              ) : (
+                task.summary
+              )}
+            </h3>
+          </div>
+        </div>
       );
     }
     
-    return <h3 className={titleClasses}>{task.summary}</h3>;
-  }, [task.summary, task.status, task.issueKey, backlogSpaceUrl]);
+    // 親タスクがない場合は通常表示
+    return (
+      <h3 className={`${titleClasses} mb-2 truncate`}>
+        {backlogSpaceUrl ? (
+          <a
+            href={generateBacklogUrl(backlogSpaceUrl, task.issueKey)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkClass}
+          >
+            {task.summary}
+          </a>
+        ) : (
+          task.summary
+        )}
+      </h3>
+    );
+  }, [task.summary, task.status, task.issueKey, task.parentTask, backlogSpaceUrl]);
 
   return (
     <div className={`bg-white rounded-lg shadow-md p-3 border-l-4 hover:shadow-lg transition-all duration-200 ${config.borderColor} ${config.bgColor} ${config.hoverBg} ${className}`}>

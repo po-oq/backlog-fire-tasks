@@ -73,6 +73,7 @@ describe('transformIssueToTask', () => {
     const mockIssue: BacklogIssue = {
       id: 123,
       projectId: 456,
+      issueKey: 'TEST-123',
       issueType: { id: 1, name: 'タスク' },
       summary: 'テストタスク',
       status: { id: 1, name: '処理中' },
@@ -87,6 +88,7 @@ describe('transformIssueToTask', () => {
     expect(result).toEqual({
       id: 123,
       projectKey: 'TEST',
+      issueKey: 'TEST-123',
       issueType: 'タスク',
       summary: 'テストタスク',
       status: '処理中',
@@ -96,7 +98,8 @@ describe('transformIssueToTask', () => {
       updated: '2024/01/15 18:00',
       isOverdue: true,
       overdueDays: expect.any(Number),
-      isDueTomorrow: false
+      isDueTomorrow: false,
+      parentTask: undefined
     });
   });
 
@@ -104,6 +107,7 @@ describe('transformIssueToTask', () => {
     const mockIssue: BacklogIssue = {
       id: 123,
       projectId: 456,
+      issueKey: 'BUG-123',
       issueType: { id: 1, name: 'バグ' },
       summary: 'テストバグ',
       status: { id: 2, name: '未対応' },
@@ -116,6 +120,7 @@ describe('transformIssueToTask', () => {
     expect(result).toEqual({
       id: 123,
       projectKey: 'BUG',
+      issueKey: 'BUG-123',
       issueType: 'バグ',
       summary: 'テストバグ',
       status: '未対応',
@@ -125,8 +130,71 @@ describe('transformIssueToTask', () => {
       updated: '2024/01/15 18:00',
       isOverdue: false,
       overdueDays: 0,
-      isDueTomorrow: false
+      isDueTomorrow: false,
+      parentTask: undefined
     });
+  });
+
+  it('親子タスクの関係を正しく解決できること', () => {
+    const parentIssue: BacklogIssue = {
+      id: 100,
+      projectId: 456,
+      issueKey: 'TEST-100',
+      issueType: { id: 1, name: 'タスク' },
+      summary: '親タスク',
+      status: { id: 1, name: '処理中' },
+      assignee: { id: 789, name: '田中太郎' },
+      startDate: '2024-01-01',
+      dueDate: '2024-12-31',
+      updated: '2024-01-15T09:00:00Z'
+    };
+
+    const childIssue: BacklogIssue = {
+      id: 101,
+      projectId: 456,
+      issueKey: 'TEST-101',
+      issueType: { id: 2, name: 'サブタスク' },
+      summary: '子タスク',
+      status: { id: 1, name: '処理中' },
+      assignee: { id: 789, name: '田中太郎' },
+      startDate: '2024-01-01',
+      dueDate: '2024-01-31',
+      updated: '2024-01-15T09:00:00Z',
+      parentIssueId: 100  // 親課題IDを設定
+    };
+
+    const allIssues = [parentIssue, childIssue];
+    
+    // 親タスクの変換（親課題なし）
+    const parentTask = transformIssueToTask(parentIssue, 'TEST', allIssues);
+    expect(parentTask.parentTask).toBeUndefined();
+
+    // 子タスクの変換（親課題情報が設定される）
+    const childTask = transformIssueToTask(childIssue, 'TEST', allIssues);
+    expect(childTask.parentTask).toEqual({
+      id: 100,
+      issueKey: 'TEST-100',
+      summary: '親タスク'
+    });
+  });
+
+  it('存在しない親課題IDの場合、parentTaskはundefinedになること', () => {
+    const childIssue: BacklogIssue = {
+      id: 101,
+      projectId: 456,
+      issueKey: 'TEST-101',
+      issueType: { id: 2, name: 'サブタスク' },
+      summary: '子タスク',
+      status: { id: 1, name: '処理中' },
+      startDate: '2024-01-01',
+      updated: '2024-01-15T09:00:00Z',
+      parentIssueId: 999  // 存在しない親課題ID
+    };
+
+    const allIssues = [childIssue];  // 親課題は含まれていない
+    
+    const result = transformIssueToTask(childIssue, 'TEST', allIssues);
+    expect(result.parentTask).toBeUndefined();
   });
 });
 
@@ -291,6 +359,7 @@ describe('Backlog API functions', () => {
         {
           id: 101,
           projectId: 1,
+          issueKey: 'TEST1-101',
           issueType: { id: 1, name: 'タスク' },
           summary: 'テストタスク1',
           status: { id: 1, name: '処理中' },
@@ -302,6 +371,7 @@ describe('Backlog API functions', () => {
         {
           id: 102,
           projectId: 2,
+          issueKey: 'TEST2-102',
           issueType: { id: 2, name: 'バグ' },
           summary: 'テストバグ1',
           status: { id: 2, name: '未対応' },
@@ -341,6 +411,7 @@ describe('Backlog API functions', () => {
         expect(tasks[0]).toEqual({
           id: 101,
           projectKey: 'TEST1',
+          issueKey: 'TEST1-101',
           issueType: 'タスク',
           summary: 'テストタスク1',
           status: '処理中',
@@ -350,11 +421,13 @@ describe('Backlog API functions', () => {
           updated: '2024/01/15 18:00',
           isOverdue: false,
           overdueDays: 0,
-          isDueTomorrow: false
+          isDueTomorrow: false,
+          parentTask: undefined
         });
         expect(tasks[1]).toEqual({
           id: 102,
           projectKey: 'TEST2',
+          issueKey: 'TEST2-102',
           issueType: 'バグ',
           summary: 'テストバグ1',
           status: '未対応',
@@ -364,7 +437,8 @@ describe('Backlog API functions', () => {
           updated: '2024/01/16 19:00',
           isOverdue: true,
           overdueDays: expect.any(Number),
-          isDueTomorrow: false
+          isDueTomorrow: false,
+          parentTask: undefined
         });
       }
     });
