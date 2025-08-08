@@ -20,6 +20,10 @@ export interface BacklogIssue {
     id: number;
     name: string;
   };
+  createdUser?: {
+    id: number;
+    name: string;
+  };
   startDate?: string;
   dueDate?: string;
   updated: string;
@@ -53,6 +57,7 @@ export interface Task {
   summary: string;
   status: string;
   assigneeName?: string;
+  creatorName: string; // 作成者名（新規追加）
   startDate?: string;
   dueDate?: string;
   updated: string;
