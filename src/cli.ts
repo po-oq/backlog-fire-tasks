@@ -30,7 +30,9 @@ export function createApp(backlogSpaceUrl?: string): express.Application {
   // API エンドポイント
   app.get('/api/tasks', async (req, res) => {
     try {
-      const tasksResult = await fetchBacklogTasks();
+      // modeパラメータを取得（デフォルトは'assignee'）
+      const mode = (req.query.mode as 'assignee' | 'creator') || 'assignee';
+      const tasksResult = await fetchBacklogTasks(mode);
       if (tasksResult.isErr()) {
         return res.status(500).json({ 
           error: tasksResult.error.message 

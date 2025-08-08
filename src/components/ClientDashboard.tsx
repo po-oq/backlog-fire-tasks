@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { TaskCard } from './TaskCard';
 import { useTasks } from '../hooks/useTasks';
 import { useTaskFilter, type FilterType } from '../hooks/useTaskFilter';
@@ -14,8 +14,11 @@ interface ClientDashboardProps {
 export function ClientDashboard({ 
   backlogSpaceUrl 
 }: ClientDashboardProps) {
-  // Custom hooks使用
-  const { tasks, loading, error, lastUpdated } = useTasks();
+  // viewMode state（担当者表示がデフォルト）
+  const [viewMode, setViewMode] = useState<'assignee' | 'creator'>('assignee');
+
+  // Custom hooks使用（viewModeを渡す）
+  const { tasks, loading, error, lastUpdated } = useTasks(viewMode);
   const { 
     currentFilter, 
     setCurrentFilter, 
@@ -27,12 +30,17 @@ export function ClientDashboard({
     stats,
     availableAssignees,
     availableProjects
-  } = useTaskFilter(tasks);
+  } = useTaskFilter(tasks, viewMode);
 
   // フィルタクリックハンドラー（useCallbackで最適化）
   const handleFilterClick = useCallback((filter: FilterType) => {
     setCurrentFilter(filter);
   }, [setCurrentFilter]);
+
+  // タブ切り替えハンドラー
+  const handleTabChange = useCallback((mode: 'assignee' | 'creator') => {
+    setViewMode(mode);
+  }, []);
 
   // ローディング表示
   if (loading) {
@@ -72,6 +80,32 @@ export function ClientDashboard({
         <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           タスク管理ダッシュボード 📋
         </h1>
+
+        {/* 🎯 タブ切り替えエリア */}
+        <div className="mb-6 flex justify-center">
+          <div className="bg-white rounded-lg shadow-md p-1 inline-flex">
+            <button
+              onClick={() => handleTabChange('assignee')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                viewMode === 'assignee'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              👤 担当タスク
+            </button>
+            <button
+              onClick={() => handleTabChange('creator')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                viewMode === 'creator'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              ✍️ 作成タスク
+            </button>
+          </div>
+        </div>
 
         {/* 🎨 統合フィルタエリア */}
         <div className="mb-6 space-y-4">
@@ -126,9 +160,9 @@ export function ClientDashboard({
                       : 'border-gray-300 hover:border-gray-400 focus:border-blue-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-200`}
                 >
-                  <option value="all">👤 全担当者</option>
+                  <option value="all">{viewMode === 'creator' ? '✍️ 全作成者' : '👤 全担当者'}</option>
                   {availableAssignees.filter(name => name !== 'all').map(name => (
-                    <option key={name} value={name}>👤 {name}</option>
+                    <option key={name} value={name}>{viewMode === 'creator' ? '✍️' : '👤'} {name}</option>
                   ))}
                 </select>
 
@@ -185,7 +219,7 @@ export function ClientDashboard({
                     )}
                     {assigneeFilter !== 'all' && (
                       <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium">
-                        👤 {assigneeFilter}
+                        {viewMode === 'creator' ? '✍️' : '👤'} {assigneeFilter}
                       </span>
                     )}
                     {projectFilter !== 'all' && (

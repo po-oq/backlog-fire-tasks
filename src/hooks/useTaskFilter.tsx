@@ -4,22 +4,23 @@ import type { Task } from '../types';
 export type FilterType = 'all' | 'overdue' | 'due-tomorrow';
 
 // タスクフィルタリングのカスタムフック（担当者・プロジェクトフィルタ拡張版）
-export function useTaskFilter(tasks: Task[]) {
+export function useTaskFilter(tasks: Task[], viewMode: 'assignee' | 'creator' = 'assignee') {
   // ✨ 3つのフィルタ状態を管理
   const [statusFilter, setStatusFilter] = useState<FilterType>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
   const [projectFilter, setProjectFilter] = useState<string>('all');
 
-  // 🔍 利用可能な担当者リストを動的生成（MEMBER_KEYSベース）
+  // 🔍 利用可能な担当者/作成者リストを動的生成（viewModeに応じて切り替え）
   const availableAssignees = useMemo(() => {
-    const assignees = new Set<string>();
+    const people = new Set<string>();
     tasks.forEach(task => {
-      if (task.assigneeName) {
-        assignees.add(task.assigneeName);
+      const personName = viewMode === 'creator' ? task.creatorName : task.assigneeName;
+      if (personName) {
+        people.add(personName);
       }
     });
-    return ['all', ...Array.from(assignees).sort()];
-  }, [tasks]);
+    return ['all', ...Array.from(people).sort()];
+  }, [tasks, viewMode]);
 
   // 📁 利用可能なプロジェクトリストを動的生成（PROJECT_KEYSベース）
   const availableProjects = useMemo(() => {
@@ -48,17 +49,17 @@ export function useTaskFilter(tasks: Task[]) {
           break;
       }
 
-      // 2. 担当者フィルタ（新規）
-      const matchesAssignee = assigneeFilter === 'all' || 
-        task.assigneeName === assigneeFilter;
+      // 2. 担当者/作成者フィルタ（viewModeに応じて切り替え）
+      const personName = viewMode === 'creator' ? task.creatorName : task.assigneeName;
+      const matchesPerson = assigneeFilter === 'all' || personName === assigneeFilter;
 
       // 3. プロジェクトフィルタ（新規）
       const matchesProject = projectFilter === 'all' || 
         task.projectKey === projectFilter;
 
-      return matchesStatus && matchesAssignee && matchesProject;
+      return matchesStatus && matchesPerson && matchesProject;
     });
-  }, [tasks, statusFilter, assigneeFilter, projectFilter]);
+  }, [tasks, statusFilter, assigneeFilter, projectFilter, viewMode]);
 
   // 📊 統計計算（useMemoで最適化）
   const stats = useMemo(() => ({

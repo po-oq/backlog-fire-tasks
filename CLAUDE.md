@@ -20,9 +20,12 @@ BacklogのタスクをCLIで管理し、期限切れタスクを🔥アイコン
 
 ## 機能 ⚡
 
-- プロジェクト・メンバー別のタスク一覧表示
+- **👤 担当タスク表示**: 自分が担当者として割り当てられたタスク
+- **✍️ 作成タスク表示**: 自分が作成者（登録者）として登録したタスク
+- **🔄 タブ切り替え**: ワンクリックでリアルタイムAPI再取得
 - 期限切れタスクの視覚化（🔥 アイコン + 遅延日数）
-- React + Tailwind のペライチ HTML 生成
+- **🎨 動的フィルター**: 表示モードに応じたラベル変更（👤⇔✍️）
+- React + Tailwind のレスポンシブ HTML 生成
 - ブラウザで自動表示
 
 ## 使い方 🚀
@@ -39,7 +42,9 @@ npx backlog
 1. BacklogAPI からタスク取得
 2. Express サーバー起動（localhost:3001）
 3. ブラウザ自動起動
-4. リアルタイムでタスク確認！
+4. **「👤 担当タスク」「✍️ 作成タスク」タブ表示**
+5. **タブクリックで瞬時にAPI再取得・切り替え**
+6. リアルタイムでタスク確認！
 
 ## 環境設定 🔧
 
@@ -342,7 +347,8 @@ GET /api/v2/issues
 **パラメータ：**
 
 - `projectId[]`: プロジェクト ID 配列
-- `assigneeId[]`: 担当者 ID 配列
+- `assigneeId[]`: 担当者 ID 配列（担当タスク用）
+- `createdUserId[]`: 作成者 ID 配列（作成タスク用）
 - `statusId[]`: 状態 ID 配列（完了以外）
 - `count`: 取得件数
 
@@ -368,13 +374,14 @@ export interface Task {
   issueType: string;
   summary: string;
   status: string;
-  assigneeName?: string; // 担当者名（追加）
+  assigneeName?: string; // 担当者名
+  creatorName: string; // 作成者名（追加）
   startDate?: string;
   dueDate?: string;
   updated: string;
   isOverdue: boolean;
   overdueDays: number;
-  isDueTomorrow: boolean; // 明日期限フラグ（追加）
+  isDueTomorrow: boolean; // 明日期限フラグ
 }
 
 export interface BacklogIssue {
@@ -384,7 +391,12 @@ export interface BacklogIssue {
   summary: string;
   status: { name: string };
   assignee?: {
-    // 担当者情報（追加）
+    // 担当者情報
+    id: number;
+    name: string;
+  };
+  createdUser?: {
+    // 作成者情報（追加）
     id: number;
     name: string;
   };
@@ -429,9 +441,11 @@ npm publish
 3. **明日期限判定**: `dueDate === tomorrow` で実装
 4. **遅延日数計算**: `Math.floor((new Date() - new Date(dueDate)) / (1000 * 60 * 60 * 24))`
 5. **レスポンス型定義**: 必要な項目のみ定義（全フィールド保持しない）
-6. **担当者取得**: `issue.assignee?.name` で null 安全に取得
-7. **レスポンシブ対応**: CSS Grid + Tailwind でモバイル〜PC 対応
-8. **視覚的分類**:
+6. **担当者・作成者取得**: `issue.assignee?.name`, `issue.createdUser?.name` で null 安全に取得
+7. **タブ切り替え**: `viewMode` state で `assigneeId[]` ⇔ `createdUserId[]` API切り替え
+8. **動的フィルタリング**: 表示モードに応じて担当者⇔作成者でフィルタリング
+9. **レスポンシブ対応**: CSS Grid + Tailwind でモバイル〜PC 対応
+10. **視覚的分類**:
    - 🔥 期限切れ → 赤ボーダー + 白背景 + fire-animation
    - ⚠️ 明日期限 → 黄ボーダー + 薄黄背景
    - ✅ 期限内/完了 → 青/緑ボーダー + 白背景
@@ -443,7 +457,8 @@ npm publish
 ## 拡張案 🌟
 
 - [ ] リアルタイム更新（WebSocket）
-- [ ] フィルタリング機能（プロジェクト・担当者・状態別）
+- [x] フィルタリング機能（プロジェクト・担当者・状態別）
+- [x] タブ切り替え機能（担当タスク・作成タスク）
 - [ ] ソート機能（期限・更新日・遅延日数順）
 - [ ] CSV/PDF 出力
 - [ ] Slack/Teams 通知連携
@@ -459,8 +474,10 @@ npm publish
 
 ### 特徴まとめ ✨
 
-- **👤 担当者表示**: シンプルで分かりやすい
+- **👤✍️ 二重視点**: 担当者・作成者の両方でタスク確認可能
+- **🔄 瞬時切り替え**: タブクリックでリアルタイムAPI再取得
+- **🎨 動的UI**: 表示モードに応じたフィルターラベル変更
 - **🔥 期限切れ強調**: アニメーション付きで見逃し防止
 - **📱 レスポンシブ**: モバイル〜PC まで最適表示
 - **⚡ 高密度表示**: 1 画面に 16+件表示可能
-- **🎨 視覚的分類**: 色とアイコンで状況を即座に把握
+- **🎯 視覚的分類**: 色とアイコンで状況を即座に把握

@@ -233,6 +233,7 @@ export function transformIssueToTask(
     summary: issue.summary,
     status: issue.status.name,
     assigneeName: issue.assignee?.name,
+    creatorName: issue.createdUser?.name || 'Unknown', // 作成者名を追加（安全版）
     startDate: issue.startDate,
     dueDate: issue.dueDate,
     updated: formatDate(issue.updated),
@@ -244,7 +245,7 @@ export function transformIssueToTask(
 }
 
 // Backlog API対応関数
-export async function fetchIssues(): Promise<IssuesResult> {
+export async function fetchIssues(mode: 'assignee' | 'creator' = 'assignee'): Promise<IssuesResult> {
   const configResult = getBacklogConfig();
   if (configResult.isErr()) {
     return err(configResult.error);
@@ -304,10 +305,11 @@ export async function fetchIssues(): Promise<IssuesResult> {
     }
   }
 
-  // ユーザーID（assigneeId）の直接指定
+  // ユーザーID（assigneeIdまたはcreatedUserId）の条件分岐
   if (config.memberKeys.length > 0) {
+    const paramName = mode === 'creator' ? 'createdUserId[]' : 'assigneeId[]';
     config.memberKeys.forEach((memberId) => {
-      params.append("assigneeId[]", memberId);
+      params.append(paramName, memberId);
     });
   }
 
@@ -356,7 +358,7 @@ export const api = {
 };
 
 // 統合関数
-export async function fetchBacklogTasks(): Promise<TasksResult> {
+export async function fetchBacklogTasks(mode: 'assignee' | 'creator' = 'assignee'): Promise<TasksResult> {
   // 1. プロジェクト情報を取得（projectKeyマッピング用）
   const projectsResult = await api.fetchProjects();
   if (projectsResult.isErr()) {
@@ -369,8 +371,8 @@ export async function fetchBacklogTasks(): Promise<TasksResult> {
     projectMap.set(project.id, project.projectKey);
   });
 
-  // 2. 課題一覧を取得
-  const issuesResult = await api.fetchIssues();
+  // 2. 課題一覧を取得（modeパラメータを渡す）
+  const issuesResult = await api.fetchIssues(mode);
   if (issuesResult.isErr()) {
     return err(issuesResult.error);
   }
